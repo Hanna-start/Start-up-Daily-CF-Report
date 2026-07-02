@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cash Runway Analysis"
+  short_description: "Apply CFO-grade cash classification, runway, and briefing rules"
+  default_prompt: "Analyze the approved bank transaction data and produce an evidence-based cash runway briefing."

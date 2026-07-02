@@ -1,0 +1,4 @@
+pandas>=2.2,<3
+python-dotenv>=1.0,<2
+google-adk>=2.3,<3
+pytest>=8,<10

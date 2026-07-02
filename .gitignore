@@ -1,0 +1,16 @@
+.env
+.venv/
+docs/
+5-Day AI Agents Intensive Vibe Coding Course With Google/
+Competition Info/
+context.md
+대회안내.md
+수업정리.md
+__pycache__/
+*.py[cod]
+.pytest_cache/
+data/approvals.json
+output/
+*.xlsx
+*.xls
+!sample_bank_data.csv
