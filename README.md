@@ -1,4 +1,4 @@
-# CFO Cash Control Tower
+# Start-up Daily CF Report
 
 **One bank CSV in → how much cash you have, when it runs out, and what to do before it does.**
 
@@ -10,7 +10,7 @@ Small-company cash management is often fragmented across bank exports, daily cas
 
 ## The Solution
 
-CFO Cash Control Tower validates a local bank CSV, classifies transactions, detects recurring candidates, requests human approval for uncertainty, and calculates three deterministic scenarios. It produces:
+Start-up Daily CF Report validates a local bank CSV, classifies transactions, detects recurring candidates, requests human approval for uncertainty, and calculates three deterministic scenarios. It produces:
 
 - a daily 90-day cash forecast;
 - a monthly 12-month cash outlook;
@@ -193,7 +193,7 @@ Per the competition rules, if this entry wins, the code will additionally be mad
 
 ## 한국어 요약
 
-CFO Cash Control Tower는 은행 거래 CSV 하나로 현재 현금, 90일·12개월 전망, 런웨이와 우선 조치를 계산하는 자금관리 에이전트입니다. 실제 회사 자료는 사용하지 않으며 제출용 샘플은 완전한 가상 데이터입니다.
+Start-up Daily CF Report는 은행 거래 CSV 하나로 현재 현금, 90일·12개월 전망, 런웨이와 우선 조치를 계산하는 자금관리 에이전트입니다. 실제 회사 자료는 사용하지 않으며 제출용 샘플은 완전한 가상 데이터입니다.
 
 금액 계산은 전부 검증 가능한 Python 코드가 수행합니다. Google ADK가 데이터 검증, 거래 분석, 예측, CFO 브리핑, HTML 보고서 생성의 다섯 단계를 관리하며 Gemini는 집계 결과를 설명할 뿐 금액을 계산하지 않습니다.
 
