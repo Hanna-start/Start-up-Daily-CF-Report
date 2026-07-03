@@ -16,7 +16,8 @@ Start-up Daily CF Report validates a local bank CSV, classifies transactions, de
 - a monthly 12-month cash outlook;
 - operating burn, minimum cash reserve, and cash runway;
 - projected reserve-breach and cash-depletion dates;
-- a concise CFO briefing and a single-file English HTML dashboard.
+- a concise CFO briefing and a single-file English HTML dashboard;
+- a watched `inbox/` folder for the daily routine — drop a CSV, the report rebuilds itself.
 
 All money math is deterministic Python. The LLM explains verified calculation summaries; it never calculates financial amounts.
 
