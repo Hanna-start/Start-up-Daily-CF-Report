@@ -89,6 +89,17 @@ def test_alias_mapping_handles_known_korean_headers():
     assert mapping["date"] == "거래일시" and mapping["withdrawal"] == "찾으신금액(출금)"
 
 
+def test_one_off_loan_deposit_is_not_classified_as_revenue():
+    """'대출 입금' 같은 일회성 재무 유입이 매출로 오분류되어 런웨이를 부풀리면 안 된다 (사용자 발견 회귀)."""
+    from agents.categorizer import CategorizerAgent
+
+    category, confidence, _ = CategorizerAgent.suggest("가상 은행 대출 입금", 300000000.0, 0.0)
+    assert category == "financing" and confidence >= 0.75
+    # 적요가 '입금'뿐인 애매한 거래는 자동 확정(>=0.75) 대신 사람 검토 대상이어야 한다
+    _, vague_confidence, _ = CategorizerAgent.suggest("입금", 1000000.0, 0.0)
+    assert vague_confidence < 0.75
+
+
 def test_reversed_order_bank_file_passes_crosscheck(tmp_path):
     """최신순 정렬 + 시각 없는 파일도 일 단위 검증으로 정상 통과해야 한다 (리뷰 회귀)."""
     rows = [

@@ -20,14 +20,18 @@ CATEGORIES = {
     "unknown": "미분류",
 }
 
+# 순서가 곧 우선순위다: 구체적인 규칙(기초잔액/이체/투자/재무)을 포괄적인 영업 규칙보다
+# 먼저 검사한다. '대출 입금'처럼 재무 키워드와 '입금'이 함께 있는 적요가 매출로
+# 오분류되어 런웨이를 오염시키는 것을 막기 위함이다. '입금' 단독은 자동 확정하지 않고
+# 입금 폴백(낮은 확신도 → 사람 검토)으로 내려보낸다.
 RULES = [
     (r"기초잔액|기초 잔액|이월잔액|opening balance|balance forward|carry ?over", "opening_balance"),
-    (r"매출|정산|수익|입금", "operating_inflow"),
-    (r"급여|임차|월세|보험|서버|클라우드|aws|아마존웹서비스", "operating_fixed"),
-    (r"외주|부품|광고|카드|식대|배달|스타벅스|맥도날드|카카오t", "operating_variable"),
+    (r"이월|계좌대체|자금이체", "transfer"),
     (r"장비|설비|보증금|투자자산", "investing"),
     (r"대출|차입|이자|원금|투자금", "financing"),
-    (r"이월|계좌대체|자금이체", "transfer"),
+    (r"급여|임차|월세|보험|서버|클라우드|aws|아마존웹서비스", "operating_fixed"),
+    (r"외주|부품|광고|카드|식대|배달|스타벅스|맥도날드|카카오t", "operating_variable"),
+    (r"매출|정산|수익", "operating_inflow"),
 ]
 
 
