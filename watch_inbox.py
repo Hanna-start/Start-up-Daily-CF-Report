@@ -227,7 +227,8 @@ def main() -> int:
 
     snapshots: dict = {}
     processed: dict = {}
-    print(f"Watching {inbox.resolve()} for bank files (.csv/.xlsx). Press Ctrl+C to stop.")
+    print("은행 파일(엑셀 .xlsx / CSV)을 inbox 폴더에 넣어주세요. Drop your bank file into the inbox folder.")
+    print(f"Watching {inbox.resolve()} — Press Ctrl+C to stop.")
     pending_now = len(list(inbox.glob("*.csv")) + list(inbox.glob("*.xlsx")))
     if pending_now:
         print(f"Found {pending_now} file(s) already in the inbox; they will be offered for processing.")

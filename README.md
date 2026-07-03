@@ -118,6 +118,8 @@ The CLI asks before uncertain classifications or recurring candidates affect the
 
 ## Daily Inbox Mode
 
+**Windows:** just double-click `start_agent.bat` — it opens the `inbox\` folder, installs requirements, and starts the agent.
+
 Start the agent once, then drop each day's bank files into the `inbox/` folder — any bank, CSV or XLSX:
 
 ```powershell
