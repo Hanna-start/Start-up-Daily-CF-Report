@@ -1,6 +1,7 @@
 # Start-up Daily CF Report
 
 **One bank CSV in → how much cash you have, when it runs out, and what to do before it does.**
+**Daily routine: drop the CSV into the watched `inbox/` folder — the report rebuilds itself.**
 
 This repository uses a fully synthetic company and bank transaction dataset. No real company names, accounts, counterparties, dates, or amounts are included.
 
@@ -25,7 +26,8 @@ All money math is deterministic Python. The LLM explains verified calculation su
 
 ```mermaid
 flowchart TB
-    CSV[("Local bank CSV")] --> GUARD["Trust boundary<br/>agents/security.py · validate_local_csv"]
+    CSV[("Bank CSV · CLI argument<br/>main.py")] --> GUARD["Trust boundary<br/>agents/security.py · validate_local_csv"]
+    INBOX[("Bank CSV dropped into inbox/<br/>watch_inbox.py daily watcher")] --> GUARD
     GUARD --> REVIEW{{"Human-in-the-loop (--review)<br/>approve uncertain classifications<br/>and recurring candidates<br/>(persisted in data/approvals.json)"}}
     REVIEW --> A1
 
@@ -61,11 +63,11 @@ This project demonstrates 3 of the 6 course concepts (minimum required: 3), all 
 
 | Concept | Where in code | What it proves |
 |---|---|---|
-| **ADK multi-agent** | `cfo_adk/agent.py:139-153` | `CFOCashControlTower` chains five processing agents with `SequentialAgent` |
+| **ADK multi-agent** | `cfo_adk/agent.py:141-151` | `CFOCashControlTower` chains five processing agents with `SequentialAgent` |
 | ADK custom agents and session state | `cfo_adk/agent.py:23-28`, state writes in `:42`, `:57`, `:77`, `:102`, `:114` | `BaseAgent` stages pass serializable aggregate summaries through `EventActions(stateDelta=...)` |
 | **Agent Skills** | `cfo_adk/skills/analyze-cash-runway/SKILL.md` and three policy references; loaded at `cfo_adk/agent.py:119-120` | The Gemini briefing is governed by packaged forecasting, briefing, and security policies |
 | **Security**: local trust boundary | `agents/security.py:11-27`, `:30-39` | CSV and HTML paths remain inside the workspace; file type and 10 MB size limits are enforced |
-| Security: LLM data minimization | `cfo_adk/agent.py:56`, `:125-131` | Raw rows, account names, and transaction descriptions are not placed in LLM-visible state; `include_contents="none"` restricts conversation input |
+| Security: LLM data minimization | `cfo_adk/agent.py:56`, `:121-133` | Raw rows, account names, and transaction descriptions are not placed in LLM-visible state; `include_contents="none"` restricts conversation input |
 | Security: human approval | `agents/pipeline.py:24-40`, `agents/categorizer.py:34-57`, `main.py:84` | Uncertain classifications and recurring candidates require explicit `--review` approval and are never auto-approved |
 | Offline resilience | `cfo_adk/agent.py:80-103`, `main.py:34-35` | The complete five-agent workflow runs without API keys |
 
