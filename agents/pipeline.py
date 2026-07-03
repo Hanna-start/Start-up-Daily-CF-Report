@@ -24,14 +24,16 @@ def prepare_analysis(csv_path: str, approval_store: ApprovalStore | None = None)
 def review_items(categorized, patterns, store: ApprovalStore) -> None:
     uncertain = categorized[categorized["ClassificationStatus"] == "needs_review"]
     for description in uncertain["Description"].drop_duplicates():
+        if store.classification(description) is not None:
+            continue  # 이미 답한 항목(승인이든 거절이든)은 매번 다시 묻지 않는다
         row = uncertain[uncertain["Description"] == description].iloc[0]
         print(f"\n[Classification approval] {description}")
         print(f"Suggested: {row['Category']} / Reason: {row['ClassificationReason']}")
-        if input("Approve this classification? [y/N]: ").strip().lower() in {"y", "yes"}:
-            store.set_classification(description, row["CategoryCode"], True)
+        approved = input("Approve this classification? [y/N]: ").strip().lower() in {"y", "yes"}
+        store.set_classification(description, row["CategoryCode"], approved)
     for pattern in patterns:
-        if pattern.approved:
-            continue
+        if pattern.pattern_id in store.data["recurrences"]:
+            continue  # 거절 기록도 답변으로 존중한다 (재검토는 data/approvals.json 삭제)
         print(f"\n[Recurring item approval] {pattern.description}")
         print(f"Day {pattern.day_of_month} monthly · {pattern.direction} · {pattern.amount:,.0f} · confidence {pattern.confidence:.0%}")
         approved = input("Include this recurring item in the forecast? [y/N]: ").strip().lower() in {"y", "yes"}

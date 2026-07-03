@@ -65,6 +65,14 @@ class DataNormalizerAgent:
         return pd.to_numeric(cleaned, errors="coerce")
 
     @staticmethod
+    def _balance_amount(series: pd.Series) -> pd.Series:
+        """잔액 전용 파서: 빈 칸을 0원이 아니라 '잔액 미보고(NA)'로 보존한다."""
+        cleaned = series.astype(str).str.strip()
+        cleaned = cleaned.str.replace(",", "", regex=False).str.replace("원", "", regex=False)
+        cleaned = cleaned.replace({"": pd.NA, "-": pd.NA, "nan": pd.NA, "None": pd.NA})
+        return pd.to_numeric(cleaned, errors="coerce")
+
+    @staticmethod
     def _read_csv(path: Path) -> pd.DataFrame:
         last_error: Exception | None = None
         for encoding in ("utf-8-sig", "utf-8", "cp949"):
@@ -95,7 +103,7 @@ class DataNormalizerAgent:
             "Deposit": self._amount(raw[found["deposit"]]),
             "SourceRow": range(2, len(raw) + 2),
         })
-        df["Balance"] = self._amount(raw[found["balance"]]) if found["balance"] else pd.NA
+        df["Balance"] = self._balance_amount(raw[found["balance"]]) if found["balance"] else pd.NA
         df["Account"] = (
             raw[found["account"]].fillna("미지정 계좌").astype(str).str.strip()
             if found["account"] else "미지정 계좌"
@@ -137,19 +145,27 @@ class DataNormalizerAgent:
         continuity_checks = 0
         continuity_failures = 0
         if found["balance"]:
+            # 잔액이 없는 중간 행의 입출금도 누적해, 잔액 행 사이의 흐름 전체를 대조한다.
             for _, group in valid.groupby("Account", sort=False):
-                group = group.dropna(subset=["Balance"]).sort_values(["Date", "SourceRow"], kind="stable")
-                for i in range(1, len(group)):
-                    previous, current = group.iloc[i - 1], group.iloc[i]
-                    expected = float(previous["Balance"]) + float(current["Deposit"]) - float(current["Withdrawal"])
+                group = group.sort_values(["Date", "SourceRow"], kind="stable")
+                running: float | None = None
+                for _, current in group.iterrows():
+                    if running is not None:
+                        running += float(current["Deposit"]) - float(current["Withdrawal"])
+                    if pd.isna(current["Balance"]):
+                        continue
+                    if running is None:
+                        running = float(current["Balance"])  # 앵커: 첫 보고 잔액
+                        continue
                     continuity_checks += 1
-                    if abs(expected - float(current["Balance"])) > self.balance_tolerance:
+                    if abs(running - float(current["Balance"])) > self.balance_tolerance:
                         continuity_failures += 1
                         issues.append(ValidationIssue(
                             "warning", "BALANCE_MISMATCH",
-                            f"표시 잔액과 거래 흐름이 {abs(expected - float(current['Balance'])):,.0f}원 다릅니다.",
+                            f"표시 잔액과 거래 흐름이 {abs(running - float(current['Balance'])):,.0f}원 다릅니다.",
                             int(current["SourceRow"]),
                         ))
+                        running = float(current["Balance"])  # 은행 보고값으로 재동기화
 
         balance_reliable = bool(found["balance"] and continuity_checks > 0 and continuity_failures == 0)
         current_cash: float | None = None
@@ -159,9 +175,10 @@ class DataNormalizerAgent:
             current_cash = float(balance_rows.sort_values(["Date", "SourceRow"]).groupby("Account").tail(1)["Balance"].sum())
             cash_basis = "검증된 계좌별 최신 잔액 합계"
         elif not balance_rows.empty:
-            current_cash = float(balance_rows.sort_values(["Date", "SourceRow"]).iloc[-1]["Balance"])
-            cash_basis = "잔액 불일치로 인해 CSV 전체의 마지막 표시 잔액 사용"
-            issues.append(ValidationIssue("warning", "UNRELIABLE_BALANCE", "계좌별 잔액 연속성이 맞지 않아 마지막 표시 잔액을 임시 기준으로 사용합니다."))
+            # 신뢰도가 낮아도 계좌를 통째로 누락시키지 않도록 계좌별 마지막 잔액을 합산한다.
+            current_cash = float(balance_rows.sort_values(["Date", "SourceRow"]).groupby("Account").tail(1)["Balance"].sum())
+            cash_basis = "잔액 불일치 경고 상태의 계좌별 최신 잔액 합계(신뢰도 낮음)"
+            issues.append(ValidationIssue("warning", "UNRELIABLE_BALANCE", "계좌별 잔액 연속성이 맞지 않아 최신 표시 잔액 합계를 임시 기준으로 사용합니다."))
         else:
             current_cash = float((valid["Deposit"] - valid["Withdrawal"]).sum())
             cash_basis = "잔액 컬럼 없음: 기간 내 순입출금 누계(기초잔액 포함 필요)"

@@ -18,7 +18,8 @@ Start-up Daily CF Report validates a local bank CSV, classifies transactions, de
 - operating burn, minimum cash reserve, and cash runway;
 - projected reserve-breach and cash-depletion dates;
 - a concise CFO briefing and a single-file English HTML dashboard;
-- a watched `inbox/` folder for the daily routine — drop a CSV, the report rebuilds itself.
+- a watched `inbox/` folder backed by a SQLite ledger — drop any bank's CSV/XLSX, approve, and the report rebuilds itself;
+- a per-account cross-check on every import: the bank's reported balance must equal the balance recomputed from the ledger's flows, or the import is rolled back.
 
 All money math is deterministic Python. The LLM explains verified calculation summaries; it never calculates financial amounts.
 
@@ -27,7 +28,7 @@ All money math is deterministic Python. The LLM explains verified calculation su
 ```mermaid
 flowchart TB
     CSV[("Bank CSV · CLI argument<br/>main.py")] --> GUARD["Trust boundary<br/>agents/security.py · validate_local_csv"]
-    INBOX[("Bank CSV dropped into inbox/<br/>watch_inbox.py daily watcher")] --> GUARD
+    INBOX[("Any bank's CSV/XLSX dropped into inbox/<br/>watch_inbox.py · SQLite ledger + day-level cross-check")] --> GUARD
     GUARD --> REVIEW{{"Human-in-the-loop (--review)<br/>approve uncertain classifications<br/>and recurring candidates<br/>(persisted in data/approvals.json)"}}
     REVIEW --> A1
 
@@ -68,7 +69,8 @@ This project demonstrates 3 of the 6 course concepts (minimum required: 3), all 
 | **Agent Skills** | `cfo_adk/skills/analyze-cash-runway/SKILL.md` and three policy references; loaded at `cfo_adk/agent.py:119-120` | The Gemini briefing is governed by packaged forecasting, briefing, and security policies |
 | **Security**: local trust boundary | `agents/security.py:11-27`, `:30-39` | CSV and HTML paths remain inside the workspace; file type and 10 MB size limits are enforced |
 | Security: LLM data minimization | `cfo_adk/agent.py:56`, `:121-133` | Raw rows, account names, and transaction descriptions are not placed in LLM-visible state; `include_contents="none"` restricts conversation input |
-| Security: human approval | `agents/pipeline.py:24-40`, `agents/categorizer.py:34-57`, `main.py:84` | Uncertain classifications and recurring candidates require explicit `--review` approval and are never auto-approved |
+| Security: human approval | `agents/pipeline.py`, `agents/categorizer.py:34-57`, `main.py:84` | Uncertain classifications, recurring candidates, and every inbox file require explicit approval and are never auto-approved |
+| LLM tool use with a human gate | `agents/format_reader.py`, `watch_inbox.py` | Gemini interprets unknown bank layouts from header names only; a human approves the mapping; day-level math verifies it |
 | Offline resilience | `cfo_adk/agent.py:80-103`, `main.py:34-35` | The complete five-agent workflow runs without API keys |
 
 ## Security & Privacy by Design
@@ -116,13 +118,22 @@ The CLI asks before uncertain classifications or recurring candidates affect the
 
 ## Daily Inbox Mode
 
-Start the watcher once, then drop each day's bank CSV into the `inbox/` folder:
+Start the agent once, then drop each day's bank files into the `inbox/` folder — any bank, CSV or XLSX:
 
 ```powershell
 python watch_inbox.py
 ```
 
-The watcher detects the new file, runs the same five-agent pipeline (security gate included), refreshes `output/cfo_control_tower.html`, and opens it in the browser. Recurring items approved earlier via `--review` are reused; new uncertain items are conservatively included and disclosed in the report — nothing is auto-approved.
+For every new file the agent asks before acting. Unknown layouts are interpreted once: Gemini proposes the column mapping from **header names only** (amounts and counterparties are never sent), a human approves it, and the format is remembered. Rows accumulate in a SQLite ledger (`data/ledger.db`) with duplicate protection, and every account must pass a **day-level cross-check** — the balance the bank reports must equal the balance recomputed from the ledger's cash flows — or the entire import is rolled back. Verified files are moved to `archive/`, and the dashboard is rebuilt from the full ledger.
+
+Query the ledger anytime, instantly, without an API key:
+
+```powershell
+python cf.py balances   # per-account balances + cross-check status
+python cf.py imports    # import audit log
+```
+
+`--auto` runs unattended and only accepts formats that a human previously approved and the cross-check verified.
 
 ## Running with Google ADK and Gemini
 
@@ -181,7 +192,10 @@ The current 9-test suite covers balance reconciliation, recurring-pattern approv
 ## Project Structure
 
 - `main.py`: ADK-first CLI entry point and Runner lifecycle
-- `watch_inbox.py`: daily inbox watcher — rebuilds the report when a new CSV lands in `inbox/`
+- `watch_inbox.py`: daily inbox agent — asks, ingests into the ledger, cross-checks, archives, rebuilds
+- `cf.py`: instant ledger queries (balances, import log) without touching the dashboard
+- `agents/ledger.py`: SQLite ledger with duplicate protection and day-level balance cross-checks
+- `agents/format_reader.py`: any-format reader — AI-proposed, human-approved column mapping
 - `agents/pipeline.py`: deterministic analysis and report pipeline
 - `agents/security.py`: local CSV and report-output trust boundary
 - `agents/data_normalizer.py`: CSV normalization and balance validation

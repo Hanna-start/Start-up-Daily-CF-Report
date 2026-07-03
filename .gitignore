@@ -3,6 +3,7 @@
 docs/
 Demo/
 inbox/
+archive/
 5-Day AI Agents Intensive Vibe Coding Course With Google/
 Competition Info/
 context.md
@@ -11,7 +12,7 @@ context.md
 __pycache__/
 *.py[cod]
 .pytest_cache/
-data/approvals.json
+data/
 output/
 *.xlsx
 *.xls
