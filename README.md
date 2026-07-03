@@ -124,6 +124,12 @@ Start the agent once, then drop each day's bank files into the `inbox/` folder �
 python watch_inbox.py
 ```
 
+Try it right away with the bundled sample — while the agent is running, copy the file into the inbox (or drag it in Explorer):
+
+```powershell
+Copy-Item sample_bank_data.csv inbox\
+```
+
 For every new file the agent asks before acting. Unknown layouts are interpreted once: Gemini proposes the column mapping from **header names only** (amounts and counterparties are never sent), a human approves it, and the format is remembered. Rows accumulate in a SQLite ledger (`data/ledger.db`) with duplicate protection, and every account must pass a **day-level cross-check** — the balance the bank reports must equal the balance recomputed from the ledger's cash flows — or the entire import is rolled back. Verified files are moved to `archive/`, and the dashboard is rebuilt from the full ledger.
 
 Query the ledger anytime, instantly, without an API key:
