@@ -111,6 +111,16 @@ python main.py sample_bank_data.csv --review --open
 
 The CLI asks before uncertain classifications or recurring candidates affect the forecast. Opening balances are identified deterministically and excluded from review and forecast inflows. Approval decisions are stored locally in `data/approvals.json`, which is excluded from Git. CLI prompts are English; transaction descriptions retain the source CSV language.
 
+## Daily Inbox Mode
+
+Start the watcher once, then drop each day's bank CSV into the `inbox/` folder:
+
+```powershell
+python watch_inbox.py
+```
+
+The watcher detects the new file, runs the same five-agent pipeline (security gate included), refreshes `output/cfo_control_tower.html`, and opens it in the browser. Recurring items approved earlier via `--review` are reused; new uncertain items are conservatively included and disclosed in the report — nothing is auto-approved.
+
 ## Running with Google ADK and Gemini
 
 Copy `.env.example` to `.env` and set a Google AI Studio key:
@@ -168,6 +178,7 @@ The current 9-test suite covers balance reconciliation, recurring-pattern approv
 ## Project Structure
 
 - `main.py`: ADK-first CLI entry point and Runner lifecycle
+- `watch_inbox.py`: daily inbox watcher — rebuilds the report when a new CSV lands in `inbox/`
 - `agents/pipeline.py`: deterministic analysis and report pipeline
 - `agents/security.py`: local CSV and report-output trust boundary
 - `agents/data_normalizer.py`: CSV normalization and balance validation

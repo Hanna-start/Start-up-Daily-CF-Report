@@ -1,6 +1,8 @@
 .env
 .venv/
 docs/
+Demo/
+inbox/
 5-Day AI Agents Intensive Vibe Coding Course With Google/
 Competition Info/
 context.md
@@ -14,3 +16,4 @@ output/
 *.xlsx
 *.xls
 !sample_bank_data.csv
+.gstack/
