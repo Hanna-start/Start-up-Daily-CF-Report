@@ -187,7 +187,7 @@ This report is decision-support analysis, not a set of financial statements or a
 python -m pytest -q
 ```
 
-The current 9-test suite covers balance reconciliation, recurring-pattern approval state, 90-day and 12-month outputs, non-CSV and workspace-boundary rejection, the five-agent ADK structure, Agent Skill loading, and an offline ADK-to-HTML integration run.
+The 24-test suite covers balance reconciliation, recurring-pattern approval state, 90-day and 12-month outputs, non-CSV and workspace-boundary rejection, the five-agent ADK structure, Agent Skill loading, an offline ADK-to-HTML integration run, and the ledger layer: duplicate protection, day-level cross-check rollbacks, reversed-order and same-day-backfill bank files, multi-account totals, XLSX header detection, and one-off financing deposits staying out of revenue.
 
 ## Project Structure
 
