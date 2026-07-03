@@ -88,7 +88,7 @@ class OfflineCFOBriefingAgent(BaseAgent):
                 "The Base Case is net cash positive, so no runway limit applies. "
             )
         briefing = (
-            f"Verified closing cash is KRW {forecast['current_cash']:,.0f}. "
+            f"Verified closing cash is KRW {forecast['current_cash'] / 1000:,.0f}K (thousands of KRW). "
             + runway_sentence
             + f"Projected cash depletion is {base['exhaustion_date'] or 'not within 12 months'}. "
             + "Review pending recurring items and finalize liquidity actions before the first risk date."
@@ -96,7 +96,7 @@ class OfflineCFOBriefingAgent(BaseAgent):
         if forecast.get("unclassified_count"):
             briefing += (
                 f" Note: {forecast['unclassified_count']} unclassified transactions "
-                f"totaling KRW {forecast['unclassified_outflow'] + forecast['unclassified_inflow']:,.0f} "
+                f"totaling KRW {(forecast['unclassified_outflow'] + forecast['unclassified_inflow']) / 1000:,.0f}K "
                 "were conservatively included; run --review to classify them."
             )
         yield _event(self, briefing, {"cfo_briefing": briefing, "briefing_mode": "deterministic_fallback"})
@@ -124,7 +124,9 @@ def build_root_agent(use_llm: bool = True) -> SequentialAgent:
             description="Produces an evidence-based CFO cash briefing using the cash runway skill.",
             instruction=(
                 "Use the analyze-cash-runway skill. Use only {forecast_analysis} and "
-                "{transaction_analysis}. Never create or recalculate amounts. Return concise professional English."
+                "{transaction_analysis}. Never create or recalculate amounts. "
+                "Express amounts in thousands of KRW with a K suffix (e.g. KRW 140,000K). "
+                "Return concise professional English."
             ),
             tools=[tools],
             output_key="cfo_briefing",

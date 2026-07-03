@@ -136,7 +136,7 @@ class CashForecastAgent:
         if unclassified_count:
             assumptions.append(
                 f"{unclassified_count} unclassified transactions (outflow KRW "
-                f"{unclassified_outflow:,.0f}, inflow KRW {unclassified_inflow:,.0f}) "
+                f"{unclassified_outflow / 1000:,.0f}K, inflow KRW {unclassified_inflow / 1000:,.0f}K) "
                 "were conservatively included in operating cash flows. Run with "
                 "--review to classify them."
             )
